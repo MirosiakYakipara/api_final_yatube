@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers, validators
 
 from posts.models import Comment, Post, Group, Follow, User
 
@@ -81,7 +81,7 @@ class FollowSerializer(serializers.ModelSerializer):
             'following'
         )
         validators = [
-            serializers.UniqueTogetherValidator(
+            validators.UniqueTogetherValidator(
                 queryset=Follow.objects.all(),
                 fields=('user', 'following'),
                 message='Вы уже подписаны на данного автора!'
@@ -89,8 +89,9 @@ class FollowSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        if data['user'] == data['following']:
-            raise serializers.ValidationError(
-                'Вы не можете подписаться на самого себя!'
-            )
+        if self.context['request'].method == 'POST':
+            if self.context['request'].user == data['following']:
+                raise serializers.ValidationError(
+                    'Вы не можете подписаться на самого себя!'
+                )
         return data
